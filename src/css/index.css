@@ -16,3 +16,10 @@ audio::-webkit-media-controls-panel {
     width: 41rem /* 656px */;
     max-width: 95vw;
 }
+
+.input-container {
+    width: 41rem;
+    height: 40rem;
+    border: 2px solid grey;
+    border-radius: 2%;
+}

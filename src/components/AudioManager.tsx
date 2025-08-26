@@ -8,6 +8,7 @@ import Constants from "../utils/Constants";
 import { Transcriber } from "../hooks/useTranscriber";
 import Progress from "./Progress";
 import AudioRecorder from "./AudioRecorder";
+import { PresentationModal } from "./PresentationModal";
 
 function titleCase(str: string) {
     str = str.toLowerCase();
@@ -142,13 +143,14 @@ export enum AudioSource {
 
 export function AudioManager(props: { transcriber: Transcriber }) {
     const [progress, setProgress] = useState<number | undefined>(0);
+    const [presentationContent, setPresentationContent] = useState<string[]>();
     const [audioData, setAudioData] = useState<
         | {
-              buffer: AudioBuffer;
-              url: string;
-              source: AudioSource;
-              mimeType: string;
-          }
+            buffer: AudioBuffer;
+            url: string;
+            source: AudioSource;
+            mimeType: string;
+        }
         | undefined
     >(undefined);
     const [audioDownloadUrl, setAudioDownloadUrl] = useState<
@@ -247,6 +249,27 @@ export function AudioManager(props: { transcriber: Transcriber }) {
 
     return (
         <>
+            <textarea onChange={(event) => {
+                const text = `
+                We gather together to ask the Lord's blessing;
+He chastens and hastens His will to make known;
+the wicked oppressing now cease from distressing.
+Sing praises to His name, He forgets not His own.
+
+Beside us to guide us, our God with us joining,
+ordaining, maintaining His kingdom divine;
+so from the beginning the fight we were winning:
+the Lord was at our side- the glory be Thine!
+
+We all do extol Thee, Thou leader triumphant,
+and pray that Thou still our defender wilt be.
+Let Thy congregation escape tribulation;
+Thy name be ever praised! O Lord, make us free!`;
+
+                const splitText = text.split('\n\n');
+                console.log('splitText', splitText);
+                setPresentationContent(splitText)
+            }} className="input-container border-solid  p-6 text-lg" required placeholder="Paste your text content for the presentation here. Leave an extra space break between slides" />
             <div className='flex flex-col justify-center items-center rounded-lg bg-white shadow-xl shadow-black/5 ring-1 ring-slate-700/10'>
                 <div className='flex flex-row space-x-2 py-2 w-full px-2'>
                     <UrlTile
@@ -282,6 +305,18 @@ export function AudioManager(props: { transcriber: Transcriber }) {
                                     setAudioFromRecording(e);
                                 }}
                             />
+                        </>
+                    )}
+                    {navigator.mediaDevices && (
+                        <>
+                            <VerticalBar />
+                            <StartTile
+                                icon={<MicrophoneIcon />}
+                                text={"Present"}
+                                setAudioData={(e) => {
+                                    props.transcriber.onInputChange();
+                                    setAudioFromRecording(e);
+                                }} slideContent={presentationContent ?? []} />
                         </>
                     )}
                 </div>
@@ -466,7 +501,7 @@ function SettingsModal(props: {
                 </>
             }
             onClose={props.onClose}
-            onSubmit={() => {}}
+            onSubmit={() => { }}
         />
     );
 }
@@ -627,9 +662,46 @@ function RecordTile(props: {
             <RecordModal
                 show={showModal}
                 onSubmit={onSubmit}
-                onProgress={(_data) => {}}
+                onProgress={(_data) => { }}
                 onClose={onClose}
             />
+        </>
+    );
+}
+
+function StartTile(props: {
+    icon: JSX.Element;
+    text: string;
+    slideContent: string[];
+    setAudioData: (data: Blob) => void;
+}) {
+
+    const { slideContent } = props;
+    const [showModal, setShowModal] = useState(false);
+
+    const onClick = () => {
+        setShowModal(true);
+    };
+
+    const onClose = () => {
+        setShowModal(false);
+    };
+
+    const onSubmit = (data: Blob | undefined) => {
+        if (data) {
+            props.setAudioData(data);
+            onClose();
+        }
+    };
+
+    return (
+        <>
+            <Tile icon={props.icon} text={props.text} onClick={onClick} />
+            <PresentationModal
+                show={showModal}
+                onSubmit={onSubmit}
+                onProgress={(_data) => { }}
+                onClose={onClose} slideContent={slideContent} />
         </>
     );
 }
